@@ -1,0 +1,4 @@
+artifacts/*
+build/*
+stage/*
+third_party/*

@@ -1,0 +1,18 @@
+image: "hub.gitlab.osnovalab.ru/devops/images/devel:set3"
+
+compile:
+  artifacts:
+    expire_in: "3 day"
+    paths:
+    - "$CI_PROJECT_DIR/artifacts"
+    - "$CI_PROJECT_DIR/build"
+
+  stage: build
+  tags: [shared]
+  script:
+    - cmake --version
+    - cat /proc/version
+    - cat /proc/meminfo
+    - ldd --version
+    - ./build_boost.sh
+    - ./build.sh
