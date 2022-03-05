@@ -41,3 +41,4 @@ find_package(Boost 1.77 REQUIRED COMPONENTS atomic chrono date_time filesystem p
 add_definitions(-D__STDC_FORMAT_MACROS -DBOOST_ALL_NO_LIB -DBOOST_MPL_CFG_NO_PREPROCESSED_HEADERS -DBOOST_MPL_LIMIT_LIST_SIZE=50)
 
 add_subdirectory(research/mi_container)
+add_subdirectory(research/concurrent_hashmap)
