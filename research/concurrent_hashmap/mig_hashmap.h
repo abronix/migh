@@ -8,10 +8,10 @@
 namespace Mig
 {
   template <typename T>
-  class Shard
+  class Bucket
   {
   public:
-    typedef std::shared_ptr<Shard<T>> Ptr;
+    typedef std::shared_ptr<Bucket<T>> Ptr;
 
     void Set(uint64_t index, T&& value)
     {
@@ -38,34 +38,34 @@ namespace Mig
   };
 
   template <typename T>
-  class ShardList
+  class BucketList
   {
   public:
-    explicit ShardList(uint32_t numberOfShard)
-    : Mask(numberOfShard - 1)
-    , List(numberOfShard)
+    explicit BucketList(uint32_t numberOfBuckets)
+    : Mask(numberOfBuckets - 1)
+    , List(numberOfBuckets)
     {
-      if ((numberOfShard & Mask) != 0)
-        throw std::runtime_error("number of shard must be a power of two");
+      if ((numberOfBuckets & Mask) != 0)
+        throw std::runtime_error("number of buckets must be a power of two");
     }
 
     void Set(uint64_t index, T&& value)
     {
-      GetShard(index).Set(index, std::move(value));
+      GetBucket(index).Set(index, std::move(value));
     }
 
     std::optional<T> Extract(uint64_t index)
     {
-      return GetShard(index).Extract(index);
+      return GetBucket(index).Extract(index);
     }
 
     bool Erase(uint64_t index)
     {
-      return GetShard(index).Erase(index);
+      return GetBucket(index).Erase(index);
     }
 
   private:
-    Shard<T>& GetShard(uint64_t index)
+    Bucket<T>& GetBucket(uint64_t index)
     {
       const size_t value = std::hash<uint64_t>{}(index);
       return List[value & Mask];
@@ -73,6 +73,15 @@ namespace Mig
 
   private:
     const uint32_t Mask;
-    std::vector<Shard<T>> List;
+    std::vector<Bucket<T>> List;
+  };
+
+  template <typename T>
+  class MultiIndexMap
+  {
+  public:
+
+  private:
+    BucketList<T> PrimaryMap;
   };
 }

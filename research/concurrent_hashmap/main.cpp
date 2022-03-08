@@ -3,22 +3,31 @@
 #include <chrono>
 #include <iostream>
 
+
+struct Object
+{
+  std::string Name;
+};
+
 void TestShard()
 {
-  Mig::ShardList<std::string> vec(4);
-  vec.Set(10, "test10");
-  vec.Set(20, "test20");
-  std::optional<std::string> word = vec.Extract(20);
+  Mig::BucketList<Object> vec(4);
+  vec.Set(10, {"test10"});
+  vec.Set(20, {"test20"});
+
+
+
+  std::optional<Object> word = vec.Extract(20);
   if (word.has_value())
   {
-    std::cout << "word first: " << word.value() << std::endl;
+    std::cout << "word first: " << word.value().Name << std::endl;
   }
 
   vec.Erase(10);
   word = vec.Extract(20);
   if (word.has_value())
   {
-    std::cout << "word second: " << word.value() << std::endl;
+    std::cout << "word second: " << word.value().Name << std::endl;
   }
 }
 
