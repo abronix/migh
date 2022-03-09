@@ -2,7 +2,29 @@
 
 namespace GtpMesh
 {
+  void Updater(const Context::Ptr& source, Context::Ptr& target)
+  {
+    //TODO
+    //if (source->Id)
+    //  target->Id = source->Id;
+
+    if (source->Msisdn)
+      target->Msisdn = source->Msisdn;
+
+    if (source->Imsi)
+      target->Imsi = source->Imsi;
+
+    if (source->Imei)
+      target->Imei = source->Imei;
+  }
+
   uint32_t MultiIndexMap::CreateOrUpdateById(uint64_t id, const Context::Ptr& source, Context::Ptr& target)
+  {
+    MapById.CreateOrUpdate(id, source, target, &Updater);
+    return 0;
+  }
+
+  uint32_t MultiIndexMap::DeleteById(uint64_t id)
   {
     return 0;
   }

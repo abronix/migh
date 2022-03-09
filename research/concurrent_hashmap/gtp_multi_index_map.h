@@ -20,10 +20,12 @@ namespace GtpMesh
   {
   public:
     uint32_t CreateOrUpdateById(uint64_t id, const Context::Ptr& source, Context::Ptr& target);
+    uint32_t DeleteById(uint64_t id);
+
     uint32_t UpdateByMsisdn(uint64_t msisdn, const Context::Ptr& source, Context::Ptr& target);
 
   private:
-    BucketList<Context> MapById;
+    BucketList<Context::Ptr> MapById;
     BucketList<Shard*> MapByMsisdn;
   };
 }
