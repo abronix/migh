@@ -1,4 +1,4 @@
-#include "mig_hashmap.h"
+#include "gtp_bucket_list.h"
 
 #include <chrono>
 #include <iostream>
@@ -11,7 +11,7 @@ struct Object
 
 void TestShard()
 {
-  Mig::BucketList<Object> vec(4);
+  GtpMesh::BucketList<Object> vec(4);
   vec.Set(10, {"test10"});
   vec.Set(20, {"test20"});
 

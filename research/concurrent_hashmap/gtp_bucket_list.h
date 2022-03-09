@@ -1,22 +1,38 @@
+#pragma once
+
 #include <cstdint>
+#include <functional>
 #include <map>
 #include <memory>
 #include <mutex>
 #include <optional>
 #include <vector>
 
-namespace Mig
+namespace GtpMesh
 {
   template <typename T>
   class Bucket
   {
   public:
     typedef std::shared_ptr<Bucket<T>> Ptr;
+    typedef std::function<void(const T& source, T& target)> Routine;
 
     void Set(uint64_t index, T&& value)
     {
       std::lock_guard lock(Guard);
       Map.emplace(index, value);
+    }
+
+    std::optional<T> Update(uint64_t index, const T& source, const Routine& updater)
+    {
+      std::lock_guard lock(Guard);
+      auto iter = Map.find(index);
+      if (iter == Map.end())
+        return std::optional<T>();
+
+      T& target = iter->second;
+      updater(source, target);
+      return target;
     }
 
     std::optional<T> Extract(uint64_t index)
@@ -54,6 +70,11 @@ namespace Mig
       GetBucket(index).Set(index, std::move(value));
     }
 
+    std::optional<T> Update(uint64_t index, const T& source, typename const Bucket<T>::Routine& updater)
+    {
+      return GetBucket(index).Update(index, source, updater);
+    }
+
     std::optional<T> Extract(uint64_t index)
     {
       return GetBucket(index).Extract(index);
@@ -74,14 +95,5 @@ namespace Mig
   private:
     const uint32_t Mask;
     std::vector<Bucket<T>> List;
-  };
-
-  template <typename T>
-  class MultiIndexMap
-  {
-  public:
-
-  private:
-    BucketList<T> PrimaryMap;
   };
 }
