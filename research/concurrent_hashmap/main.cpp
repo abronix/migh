@@ -9,26 +9,21 @@ struct Object
   std::string Name;
 };
 
+void Updater(const Object& source, Object& target)
+{
+  target = source;
+}
+
 void TestShard()
 {
+  Object target;
   GtpMesh::BucketList<Object> vec(4);
-  vec.Set(10, {"test10"});
-  vec.Set(20, {"test20"});
+  vec.CreateOrUpdate(10, {"test10"}, target, Updater);
+  vec.CreateOrUpdate(20, {"test20"}, target, Updater);
 
-
-
-  std::optional<Object> word = vec.Extract(20);
-  if (word.has_value())
-  {
-    std::cout << "word first: " << word.value().Name << std::endl;
-  }
-
-  vec.Erase(10);
-  word = vec.Extract(20);
-  if (word.has_value())
-  {
-    std::cout << "word second: " << word.value().Name << std::endl;
-  }
+  uint32_t i1 = vec.Erase(10);
+  uint32_t i2 = vec.Erase(80);
+  int k = 0;
 }
 
 int main(int argc, char** argv)

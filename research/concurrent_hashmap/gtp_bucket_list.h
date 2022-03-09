@@ -10,6 +10,14 @@
 
 namespace GtpMesh
 {
+  namespace Status
+  {
+    constexpr uint32_t NotFound = 1;
+    constexpr uint32_t Created = 2;
+    constexpr uint32_t Updated = 3;
+    constexpr uint32_t Deleted = 4;
+  }
+
   template <typename T>
   class Bucket
   {
@@ -17,35 +25,26 @@ namespace GtpMesh
     typedef std::shared_ptr<Bucket<T>> Ptr;
     typedef std::function<void(const T& source, T& target)> Routine;
 
-    void Set(uint64_t index, T&& value)
-    {
-      std::lock_guard lock(Guard);
-      Map.emplace(index, value);
-    }
-
-    std::optional<T> Update(uint64_t index, const T& source, const Routine& updater)
+    uint32_t CreateOrUpdate(uint64_t index, const T& source, T& target, const Routine& updater)
     {
       std::lock_guard lock(Guard);
       auto iter = Map.find(index);
       if (iter == Map.end())
-        return std::optional<T>();
+      {
+        Map.emplace(index, source);
+        target = source;
+        return Status::Created;
+      }
 
-      T& target = iter->second;
+      target = iter->second;
       updater(source, target);
-      return target;
+      return Status::Updated;
     }
 
-    std::optional<T> Extract(uint64_t index)
+    uint32_t Erase(uint64_t index)
     {
       std::lock_guard lock(Guard);
-      const std::map<uint64_t, T>::node_type& node = Map.extract(index);
-      return node.empty() ? std::optional<T>() : node.mapped();
-    }
-
-    bool Erase(uint64_t index)
-    {
-      std::lock_guard lock(Guard);
-      return Map.erase(index);
+      return Map.erase(index) ? Status::Deleted : Status::NotFound;
     }
 
   private:
@@ -65,22 +64,12 @@ namespace GtpMesh
         throw std::runtime_error("number of buckets must be a power of two");
     }
 
-    void Set(uint64_t index, T&& value)
+    uint32_t CreateOrUpdate(uint64_t index, const T& source, T& target, typename const Bucket<T>::Routine& updater)
     {
-      GetBucket(index).Set(index, std::move(value));
+      return GetBucket(index).CreateOrUpdate(index, source, target, updater);
     }
 
-    std::optional<T> Update(uint64_t index, const T& source, typename const Bucket<T>::Routine& updater)
-    {
-      return GetBucket(index).Update(index, source, updater);
-    }
-
-    std::optional<T> Extract(uint64_t index)
-    {
-      return GetBucket(index).Extract(index);
-    }
-
-    bool Erase(uint64_t index)
+    uint32_t Erase(uint64_t index)
     {
       return GetBucket(index).Erase(index);
     }
