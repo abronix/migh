@@ -41,6 +41,20 @@ namespace GtpMesh
       return Status::Updated;
     }
 
+    uint32_t CreateOrUpdate(uint64_t index, const T& source)
+    {
+      std::lock_guard lock(Guard);
+      auto iter = Map.find(index);
+      if (iter == Map.end())
+      {
+        Map.emplace(index, source);
+        return Status::Created;
+      }
+
+      iter->second = source;
+      return Status::Updated;
+    }
+
     uint32_t Erase(uint64_t index)
     {
       std::lock_guard lock(Guard);
@@ -64,9 +78,21 @@ namespace GtpMesh
         throw std::runtime_error("number of buckets must be a power of two");
     }
 
-    uint32_t CreateOrUpdate(uint64_t index, const T& source, T& target, typename const Bucket<T>::Routine& updater)
+    uint32_t CreateOrUpdate(uint64_t index, const T& source, T& target, typename Bucket<T>*& shard, typename const Bucket<T>::Routine& updater)
     {
-      return GetBucket(index).CreateOrUpdate(index, source, target, updater);
+      Bucket<T>& bucket = GetBucket(index);
+      shard = &bucket;
+      return bucket.CreateOrUpdate(index, source, target, updater);
+    }
+
+    uint32_t CreateOrUpdate(uint64_t index, const T& source)
+    {
+      return GetBucket(index).CreateOrUpdate(index, source);
+    }
+
+    Bucket<T>& AcquireBucket(uint64_t index)
+    {
+      return GetBucket(index);
     }
 
     uint32_t Erase(uint64_t index)

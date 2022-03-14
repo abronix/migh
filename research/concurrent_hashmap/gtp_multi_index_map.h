@@ -14,7 +14,7 @@ namespace GtpMesh
     uint64_t Imei = 0;
   };
 
-  typedef Bucket<Context> Shard;
+  typedef Bucket<Context::Ptr> Shard;
 
   class MultiIndexMap
   {
@@ -23,9 +23,11 @@ namespace GtpMesh
     uint32_t DeleteById(uint64_t id);
 
     uint32_t UpdateByMsisdn(uint64_t msisdn, const Context::Ptr& source, Context::Ptr& target);
+    uint32_t UpdateByImsi(uint64_t imsi, const Context::Ptr& source, Context::Ptr& target);
 
   private:
     BucketList<Context::Ptr> MapById;
     BucketList<Shard*> MapByMsisdn;
+    BucketList<Shard*> MapByImsi;
   };
 }

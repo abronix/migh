@@ -4,10 +4,6 @@ namespace GtpMesh
 {
   void Updater(const Context::Ptr& source, Context::Ptr& target)
   {
-    //TODO
-    //if (source->Id)
-    //  target->Id = source->Id;
-
     if (source->Msisdn)
       target->Msisdn = source->Msisdn;
 
@@ -16,11 +12,21 @@ namespace GtpMesh
 
     if (source->Imei)
       target->Imei = source->Imei;
+
+    // TODO: update location
   }
 
   uint32_t MultiIndexMap::CreateOrUpdateById(uint64_t id, const Context::Ptr& source, Context::Ptr& target)
   {
-    MapById.CreateOrUpdate(id, source, target, &Updater);
+    Shard* shard = nullptr;
+    MapById.CreateOrUpdate(id, source, target, shard, &Updater);
+
+    if (source->Msisdn)
+      MapByMsisdn.CreateOrUpdate(source->Msisdn, shard);
+
+    if (source->Imsi)
+      MapByImsi.CreateOrUpdate(source->Imsi, shard);
+
     return 0;
   }
 
@@ -31,6 +37,15 @@ namespace GtpMesh
 
   uint32_t MultiIndexMap::UpdateByMsisdn(uint64_t msisdn, const Context::Ptr& source, Context::Ptr& target)
   {
+    Bucket<Shard*>& bucket = MapByMsisdn.AcquireBucket(msisdn);
+    // TODO
+    return 0;
+  }
+
+  uint32_t MultiIndexMap::UpdateByImsi(uint64_t imsi, const Context::Ptr& source, Context::Ptr& target)
+  {
+    Bucket<Shard*>& bucket = MapByImsi.AcquireBucket(imsi);
+    // TODO
     return 0;
   }
 }

@@ -1,4 +1,4 @@
-#include "gtp_bucket_list.h"
+#include "gtp_multi_index_map.h"
 
 #include <chrono>
 #include <iostream>
@@ -17,9 +17,11 @@ void Updater(const Object& source, Object& target)
 void TestShard()
 {
   Object target;
+  GtpMesh::Bucket<Object>* shard = nullptr;
+
   GtpMesh::BucketList<Object> vec(4);
-  vec.CreateOrUpdate(10, {"test10"}, target, Updater);
-  vec.CreateOrUpdate(20, {"test20"}, target, Updater);
+  vec.CreateOrUpdate(10, {"test10"}, target, shard, Updater);
+  vec.CreateOrUpdate(20, {"test20"}, target, shard, Updater);
 
   uint32_t i1 = vec.Erase(10);
   uint32_t i2 = vec.Erase(80);
