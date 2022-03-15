@@ -19,13 +19,16 @@ namespace GtpMesh
   }
 
   template <typename T>
+  void IdleFunction(const T& source, T& target) {}
+
+  template <typename T>
   class Bucket
   {
   public:
     typedef std::shared_ptr<Bucket<T>> Ptr;
     typedef std::function<void(const T& source, T& target)> Routine;
 
-    uint32_t CreateOrUpdate(uint64_t index, const T& source, T& target, const Routine& updater)
+    uint32_t CreateOrUpdate(uint64_t index, const T& source, T& target, const Routine& routine = IdleFunction<T>)
     {
       std::lock_guard lock(Guard);
       auto iter = Map.find(index);
@@ -37,7 +40,7 @@ namespace GtpMesh
       }
 
       target = iter->second;
-      updater(source, target);
+      routine(source, target);
       return Status::Updated;
     }
 
@@ -52,6 +55,18 @@ namespace GtpMesh
       }
 
       iter->second = source;
+      return Status::Updated;
+    }
+
+    uint32_t Update(uint64_t index, const T& source, T& target, const Routine& routine)
+    {
+      std::lock_guard lock(Guard);
+      auto iter = Map.find(index);
+      if (iter == Map.end())
+        return Status::NotFound;
+
+      target = iter->second;
+      routine(source, target);
       return Status::Updated;
     }
 

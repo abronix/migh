@@ -3,6 +3,7 @@
 #include <chrono>
 #include <iostream>
 
+#include <boost/smart_ptr/detail/spinlock.hpp>
 
 struct Object
 {
@@ -28,6 +29,22 @@ void TestShard()
   int k = 0;
 }
 
+void TestLock()
+{
+  boost::detail::spinlock a;
+  boost::detail::spinlock b;
+  boost::detail::spinlock c;
+  boost::detail::spinlock d;
+
+  std::unique_lock<boost::detail::spinlock> lock1(a, std::defer_lock);
+  std::unique_lock<boost::detail::spinlock> lock2(b, std::defer_lock);
+  std::unique_lock<boost::detail::spinlock> lock3(c, std::defer_lock);
+  std::unique_lock<boost::detail::spinlock> lock4(d, std::defer_lock);
+
+  // блокирует оба объекта unique_lock без взаимной блокировки
+  std::lock(lock1, lock2, lock3, lock4);
+}
+
 int main(int argc, char** argv)
 {
   try
@@ -35,6 +52,7 @@ int main(int argc, char** argv)
     std::cout << "Test started" << std::endl;
     std::chrono::system_clock::time_point timePoint = std::chrono::system_clock::now();
 
+    TestLock();
     TestShard();
 
     std::chrono::microseconds timeInMicroseconds = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - timePoint);

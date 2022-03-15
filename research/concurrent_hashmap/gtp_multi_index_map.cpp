@@ -19,7 +19,7 @@ namespace GtpMesh
   uint32_t MultiIndexMap::CreateOrUpdateById(uint64_t id, const Context::Ptr& source, Context::Ptr& target)
   {
     Shard* shard = nullptr;
-    MapById.CreateOrUpdate(id, source, target, shard, &Updater);
+    const uint32_t status = MapById.CreateOrUpdate(id, source, target, shard, &Updater);
 
     if (source->Msisdn)
       MapByMsisdn.CreateOrUpdate(source->Msisdn, shard);
@@ -27,7 +27,7 @@ namespace GtpMesh
     if (source->Imsi)
       MapByImsi.CreateOrUpdate(source->Imsi, shard);
 
-    return 0;
+    return status;
   }
 
   uint32_t MultiIndexMap::DeleteById(uint64_t id)
@@ -38,6 +38,7 @@ namespace GtpMesh
   uint32_t MultiIndexMap::UpdateByMsisdn(uint64_t msisdn, const Context::Ptr& source, Context::Ptr& target)
   {
     Bucket<Shard*>& bucket = MapByMsisdn.AcquireBucket(msisdn);
+
     // TODO
     return 0;
   }
