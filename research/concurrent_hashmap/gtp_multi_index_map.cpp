@@ -17,25 +17,17 @@ namespace GtpMesh
     // TODO: update location
   }
 
-  void CreateOrUpdateContext(uint64_t hash, ContextHolder& contextHolder, const Context::Ptr& inContext, Context::Ptr& outContext)
+  bool CreateOrUpdateContext(uint64_t hash, ContextHolder& contextHolder, const Context::Ptr& inContext, Context::Ptr& outContext)
   {
-    auto iter = contextHolder.GetMap().find(hash);
-    if (iter == contextHolder.GetMap().end())
-    {
-      iter = contextHolder.GetMap().emplace(hash, inContext).first;
-    }
-    else
-    {
-      OptionalUpdateContext(*inContext, *iter->second);
-    }
+    auto [iter, contextWasCreated] = contextHolder.GetMap().emplace(hash, inContext);
+    if (!contextWasCreated) OptionalUpdateContext(*inContext, *iter->second);
     outContext = iter->second;
+    return contextWasCreated;
   }
 
-  void EnsureIndex(uint64_t hash, ContextHolder& contextHolder, const Context::Ptr& context)
+  bool EnsureIndex(uint64_t hash, ContextHolder& contextHolder, const Context::Ptr& context)
   {
-    auto iter = contextHolder.GetMap().find(hash);
-    if (iter == contextHolder.GetMap().end())
-      contextHolder.GetMap().emplace(hash, context);
+    return contextHolder.GetMap().emplace(hash, context).second;
   }
 
   void MultiIndexMap::UpdateContextBy(const Context::Ptr& inContext, Context::Ptr& outContext)
@@ -73,9 +65,9 @@ namespace GtpMesh
     auto contextHolderWithImeiLock = contextHolderWithImei.GetLock();
 
     std::scoped_lock(contextHolderWithMsisdnLock, contextHolderWithImsiLock, contextHolderWithImeiLock);
-    CreateOrUpdateContext(hashWithMsisdn, contextHolderWithMsisdn, inContext, outContext);
-    EnsureIndex(hashWithImsi, contextHolderWithImsi, inContext);
-    EnsureIndex(hashWithImei, contextHolderWithImei, inContext);
+    if (CreateOrUpdateContext(hashWithMsisdn, contextHolderWithMsisdn, inContext, outContext)) ++Stat.MapSizeMsisdn;
+    if (EnsureIndex(hashWithImsi, contextHolderWithImsi, inContext)) ++Stat.MapSizeImsi;
+    if (EnsureIndex(hashWithImei, contextHolderWithImei, inContext)) ++Stat.MapSizeImei;
   }
 
   void MultiIndexMap::UpdateContextByMsisdnImsi(const Context::Ptr& inContext, Context::Ptr& outContext)
@@ -89,8 +81,8 @@ namespace GtpMesh
     auto contextHolderWithImsiLock = contextHolderWithImsi.GetLock();
 
     std::scoped_lock(contextHolderWithMsisdnLock, contextHolderWithImsiLock);
-    CreateOrUpdateContext(hashWithMsisdn, contextHolderWithMsisdn, inContext, outContext);
-    EnsureIndex(hashWithImsi, contextHolderWithImsi, inContext);
+    if (CreateOrUpdateContext(hashWithMsisdn, contextHolderWithMsisdn, inContext, outContext)) ++Stat.MapSizeMsisdn;
+    if (EnsureIndex(hashWithImsi, contextHolderWithImsi, inContext)) ++Stat.MapSizeImsi;
   }
 
   void MultiIndexMap::UpdateContextByMsisdnImei(const Context::Ptr& inContext, Context::Ptr& outContext)
@@ -104,8 +96,8 @@ namespace GtpMesh
     auto contextHolderWithImeiLock = contextHolderWithImei.GetLock();
 
     std::scoped_lock(contextHolderWithMsisdnLock, contextHolderWithImeiLock);
-    CreateOrUpdateContext(hashWithMsisdn, contextHolderWithMsisdn, inContext, outContext);
-    EnsureIndex(hashWithImei, contextHolderWithImei, inContext);
+    if (CreateOrUpdateContext(hashWithMsisdn, contextHolderWithMsisdn, inContext, outContext)) ++Stat.MapSizeMsisdn;
+    if (EnsureIndex(hashWithImei, contextHolderWithImei, inContext)) ++Stat.MapSizeImei;
   }
 
   void MultiIndexMap::UpdateContextByImsiImei(const Context::Ptr& inContext, Context::Ptr& outContext)
@@ -119,8 +111,8 @@ namespace GtpMesh
     auto contextHolderWithImeiLock = contextHolderWithImei.GetLock();
 
     std::scoped_lock(contextHolderWithImsiLock, contextHolderWithImeiLock);
-    CreateOrUpdateContext(hashWithImsi, contextHolderWithImsi, inContext, outContext);
-    EnsureIndex(hashWithImei, contextHolderWithImei, inContext);
+    if (CreateOrUpdateContext(hashWithImsi, contextHolderWithImsi, inContext, outContext)) ++Stat.MapSizeImsi;
+    if (EnsureIndex(hashWithImei, contextHolderWithImei, inContext)) ++Stat.MapSizeImei;
   }
 
   void MultiIndexMap::UpdateContextByMsisdn(const Context::Ptr& inContext, Context::Ptr& outContext)
@@ -130,7 +122,7 @@ namespace GtpMesh
     auto contextHolderWithMsisdnLock = contextHolderWithMsisdn.GetLock();
 
     contextHolderWithMsisdnLock.lock();
-    CreateOrUpdateContext(hashWithMsisdn, contextHolderWithMsisdn, inContext, outContext);
+    if (CreateOrUpdateContext(hashWithMsisdn, contextHolderWithMsisdn, inContext, outContext)) ++Stat.MapSizeMsisdn;
   }
 
   void MultiIndexMap::UpdateContextByImsi(const Context::Ptr& inContext, Context::Ptr& outContext)
@@ -140,7 +132,7 @@ namespace GtpMesh
     auto contextHolderWithImsiLock = contextHolderWithImsi.GetLock();
 
     contextHolderWithImsiLock.lock();
-    CreateOrUpdateContext(hashWithImsi, contextHolderWithImsi, inContext, outContext);
+    if (CreateOrUpdateContext(hashWithImsi, contextHolderWithImsi, inContext, outContext)) ++Stat.MapSizeImsi;
   }
 
   void MultiIndexMap::UpdateContextByImei(const Context::Ptr& inContext, Context::Ptr& outContext)
@@ -150,6 +142,27 @@ namespace GtpMesh
     auto contextHolderWithImeiLock = contextHolderWithImei.GetLock();
 
     contextHolderWithImeiLock.lock();
-    CreateOrUpdateContext(hashWithImei, contextHolderWithImei, inContext, outContext);
+    if (CreateOrUpdateContext(hashWithImei, contextHolderWithImei, inContext, outContext)) ++Stat.MapSizeImei;
+  }
+
+  bool DeleteContextByIndex(uint64_t index, BucketList<ContextHolder>& buckets)
+  {
+    ContextHolder& contextHolder = buckets.GetBucket(index);
+    auto contextHolderLock = contextHolder.GetLock();
+    contextHolderLock.lock();
+    return contextHolder.GetMap().erase(index) > 0;
+  }
+
+  void MultiIndexMap::DeleteContext(const Context::Ptr& inContext, Context::Ptr& outContext)
+  {
+    // TODO:
+    if (inContext->Msisdn && DeleteContextByIndex(std::hash<uint64_t>{}(inContext->Msisdn), ListWithMsisdn)) --Stat.MapSizeMsisdn;
+    if (inContext->Imsi && DeleteContextByIndex(std::hash<uint64_t>{}(inContext->Imsi), ListWithImsi)) --Stat.MapSizeImsi;
+    if (inContext->Imei && DeleteContextByIndex(std::hash<uint64_t>{}(inContext->Imei), ListWithImei)) --Stat.MapSizeImei;
+  }
+
+  const MultiIndexMap::Statistic& MultiIndexMap::GetStat()
+  {
+    return Stat;
   }
 }

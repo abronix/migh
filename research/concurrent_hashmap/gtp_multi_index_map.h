@@ -22,8 +22,16 @@ namespace GtpMesh
   public:
     explicit MultiIndexMap(uint32_t numberOfBuckets);
     ~MultiIndexMap() {}
-
     void UpdateContextBy(const Context::Ptr& inContext, Context::Ptr& outContext);
+    void DeleteContext(const Context::Ptr& inContext, Context::Ptr& outContext);
+
+    struct Statistic
+    {
+      std::atomic_uint64_t MapSizeMsisdn = 0;
+      std::atomic_uint64_t MapSizeImsi = 0;
+      std::atomic_uint64_t MapSizeImei = 0;
+    };
+    const Statistic& GetStat();
 
   private:
     void UpdateContextByMsisdnImsiImei(const Context::Ptr& inContext, Context::Ptr& outContext);
@@ -34,9 +42,11 @@ namespace GtpMesh
     void UpdateContextByImsi(const Context::Ptr& inContext, Context::Ptr& outContext);
     void UpdateContextByImei(const Context::Ptr& inContext, Context::Ptr& outContext);
 
-  private:
+  // TODO: make private
+  public:
     BucketList<ContextHolder> ListWithMsisdn;
     BucketList<ContextHolder> ListWithImsi;
     BucketList<ContextHolder> ListWithImei;
+    Statistic Stat;
   };
 }

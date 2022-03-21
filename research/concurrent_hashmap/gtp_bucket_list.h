@@ -21,6 +21,12 @@ namespace GtpMesh
       return Map;
     }
 
+    // TODO: get rid
+    const std::map<uint64_t, ValueType>& GetMap2() const
+    {
+      return Map;
+    }
+
   private:
     LockType Lock;
     std::map<uint64_t, ValueType> Map;
@@ -41,6 +47,12 @@ namespace GtpMesh
     BucketType& GetBucket(uint64_t index)
     {
       return List[index & Mask];
+    }
+
+    // For test only
+    const std::vector<BucketType>& GetBucketList() const
+    {
+      return List;
     }
 
   private:

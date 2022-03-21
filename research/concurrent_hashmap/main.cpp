@@ -92,6 +92,87 @@ void TestLockableBucket()
   t2.join();
 }
 
+//GtpMesh::MultiIndexMap Mi(16384);
+GtpMesh::MultiIndexMap Mi(4);
+
+GtpMesh::Context::Ptr MakeContext(uint64_t msisdn, uint64_t imsi, uint64_t imei)
+{
+  GtpMesh::Context::Ptr context = std::make_shared<GtpMesh::Context>();
+  context->Msisdn = msisdn;
+  context->Imsi = imsi;
+  context->Imei = imei;
+  return context;
+}
+
+void ThreadGtp1()
+{
+  for (uint32_t index = 0; index < 10; ++index)
+  {
+    GtpMesh::Context::Ptr context = MakeContext(79031712992 + index, 10, 20);
+    context->Id = index;
+    //GtpMesh::Context::Ptr context = MakeContext(79031712992, 0, 0);
+    GtpMesh::Context::Ptr outContext = nullptr;
+    Mi.UpdateContextBy(context, outContext);
+    int k = 0;
+  }
+  GtpMesh::Context::Ptr outContext = nullptr;
+  Mi.DeleteContext(MakeContext(79031712992, 12345678, 55555555), outContext);
+}
+
+void ThreadGtp2()
+{
+  for (uint32_t index = 0; index < 10; ++index)
+  {
+    GtpMesh::Context::Ptr context = MakeContext(79031712992 + index, 10, 20);
+    context->Id = index;
+    //GtpMesh::Context::Ptr context = MakeContext(79031712992, 0, 0);
+    GtpMesh::Context::Ptr outContext = nullptr;
+    Mi.UpdateContextBy(context, outContext);
+    int k = 0;
+  }
+}
+
+void PrintMap(const GtpMesh::BucketList<GtpMesh::ContextHolder>& bucketList)
+{
+  const std::vector<GtpMesh::ContextHolder>& buckets = bucketList.GetBucketList();
+  uint32_t bucketNumber = 0;
+  for (const GtpMesh::ContextHolder& item : buckets)
+  {
+    const std::map<uint64_t, GtpMesh::Context::Ptr>& bucket = item.GetMap2();
+    std::cout << "bucket number " << bucketNumber << std::endl;
+    for (auto contextHolder : bucket)
+    {
+      const GtpMesh::Context& context = *contextHolder.second;
+      std::cout << "[" << contextHolder.first << "] Id(" << context.Id << ") Msisdn(" << context.Msisdn << ") Imsi(" << context.Imsi << ") Imei(" << context.Imei << ")\n";
+    }
+    bucketNumber++;
+  }
+}
+
+void PrintContext(const GtpMesh::MultiIndexMap& mi)
+{
+  std::cout << "Msisdn -------------------\n";
+  PrintMap(mi.ListWithMsisdn);
+
+  std::cout << "Imsi ---------------------\n";
+  PrintMap(mi.ListWithImsi);
+
+  std::cout << "Imei ---------------------\n";
+  PrintMap(mi.ListWithImei);
+}
+
+void TestGtpContext()
+{
+  std::thread t1(ThreadGtp1);
+  std::thread t2(ThreadGtp2);
+
+  t1.join();
+  t2.join();
+
+  const GtpMesh::MultiIndexMap::Statistic& stat = Mi.GetStat();
+  PrintContext(Mi);
+}
+
 void TestLock()
 {
   boost::detail::spinlock a;
@@ -115,8 +196,9 @@ int main(int argc, char** argv)
     std::cout << "Test started" << std::endl;
     std::chrono::system_clock::time_point timePoint = std::chrono::system_clock::now();
 
-    TestLock();
-    TestLockableBucket();
+    //TestLock();
+    //TestLockableBucket();
+    TestGtpContext();
 
     std::chrono::microseconds timeInMicroseconds = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - timePoint);
     std::cout << "Test finish " << timeInMicroseconds.count() << std::endl;
