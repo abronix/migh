@@ -64,7 +64,7 @@ namespace GtpMesh
     ContextHolder& contextHolderWithImei = ListWithImei.GetBucket(hashWithImei);
     auto contextHolderWithImeiLock = contextHolderWithImei.GetLock();
 
-    std::scoped_lock(contextHolderWithMsisdnLock, contextHolderWithImsiLock, contextHolderWithImeiLock);
+    std::lock(contextHolderWithMsisdnLock, contextHolderWithImsiLock, contextHolderWithImeiLock);
     if (CreateOrUpdateContext(hashWithMsisdn, contextHolderWithMsisdn, inContext, outContext)) ++Stat.MapSizeMsisdn;
     if (EnsureIndex(hashWithImsi, contextHolderWithImsi, inContext)) ++Stat.MapSizeImsi;
     if (EnsureIndex(hashWithImei, contextHolderWithImei, inContext)) ++Stat.MapSizeImei;
@@ -80,7 +80,7 @@ namespace GtpMesh
     ContextHolder& contextHolderWithImsi = ListWithImsi.GetBucket(hashWithImsi);
     auto contextHolderWithImsiLock = contextHolderWithImsi.GetLock();
 
-    std::scoped_lock(contextHolderWithMsisdnLock, contextHolderWithImsiLock);
+    std::lock(contextHolderWithMsisdnLock, contextHolderWithImsiLock);
     if (CreateOrUpdateContext(hashWithMsisdn, contextHolderWithMsisdn, inContext, outContext)) ++Stat.MapSizeMsisdn;
     if (EnsureIndex(hashWithImsi, contextHolderWithImsi, inContext)) ++Stat.MapSizeImsi;
   }
@@ -95,7 +95,7 @@ namespace GtpMesh
     ContextHolder& contextHolderWithImei = ListWithImei.GetBucket(hashWithImei);
     auto contextHolderWithImeiLock = contextHolderWithImei.GetLock();
 
-    std::scoped_lock(contextHolderWithMsisdnLock, contextHolderWithImeiLock);
+    std::lock(contextHolderWithMsisdnLock, contextHolderWithImeiLock);
     if (CreateOrUpdateContext(hashWithMsisdn, contextHolderWithMsisdn, inContext, outContext)) ++Stat.MapSizeMsisdn;
     if (EnsureIndex(hashWithImei, contextHolderWithImei, inContext)) ++Stat.MapSizeImei;
   }
@@ -110,7 +110,7 @@ namespace GtpMesh
     ContextHolder& contextHolderWithImei = ListWithImei.GetBucket(hashWithImei);
     auto contextHolderWithImeiLock = contextHolderWithImei.GetLock();
 
-    std::scoped_lock(contextHolderWithImsiLock, contextHolderWithImeiLock);
+    std::lock(contextHolderWithImsiLock, contextHolderWithImeiLock);
     if (CreateOrUpdateContext(hashWithImsi, contextHolderWithImsi, inContext, outContext)) ++Stat.MapSizeImsi;
     if (EnsureIndex(hashWithImei, contextHolderWithImei, inContext)) ++Stat.MapSizeImei;
   }

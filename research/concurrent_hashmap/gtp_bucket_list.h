@@ -50,7 +50,7 @@ namespace GtpMesh
     }
 
     // For test only
-    const std::vector<BucketType>& GetBucketList() const
+    std::vector<BucketType>& GetBucketList()
     {
       return List;
     }

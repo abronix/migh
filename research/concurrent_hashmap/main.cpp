@@ -37,17 +37,17 @@ void ThreadRoutine1()
     auto lock1 = b1.GetLock();
     std::scoped_lock(lock2, lock1);
 
-    b1.GetMap()[0].P = nullptr;
-    b2.GetMap()[0].P = nullptr;
+    //b1.GetMap()[0].P = nullptr;
+    //b2.GetMap()[0].P = nullptr;
 
     //std::this_thread::sleep_for(20ms);
     //for (uint64_t i = 0; i < 100000000; ++i) {}
 
-    b1.GetMap()[0].P = &GlobalValue;
-    b2.GetMap()[0].P = &GlobalValue;
+    //b1.GetMap()[0].P = &GlobalValue;
+    //b2.GetMap()[0].P = &GlobalValue;
 
-    PrintObject(1, b1.GetMap()[0]);
-    PrintObject(1, b2.GetMap()[0]);
+    //PrintObject(1, b1.GetMap()[0]);
+    //PrintObject(1, b2.GetMap()[0]);
 
     //lock1.unlock();
     //lock2.unlock();
@@ -64,17 +64,17 @@ void ThreadRoutine2()
     auto lock2 = b2.GetLock();
     std::scoped_lock(lock1, lock2);
 
-    b1.GetMap()[0].P = nullptr;
-    b2.GetMap()[0].P = nullptr;
+    //b1.GetMap()[0].P = nullptr;
+    //b2.GetMap()[0].P = nullptr;
 
     //for (uint64_t i = 0; i < 100000000; ++i) {}
     //std::this_thread::sleep_for(30ms);
 
-    b1.GetMap()[0].P = &GlobalValue;
-    b2.GetMap()[0].P = &GlobalValue;
+    //b1.GetMap()[0].P = &GlobalValue;
+    //b2.GetMap()[0].P = &GlobalValue;
 
-    PrintObject(2, b1.GetMap()[0]);
-    PrintObject(2, b2.GetMap()[0]);
+    //PrintObject(2, b1.GetMap()[0]);
+    //PrintObject(2, b2.GetMap()[0]);
 
     //lock1.unlock();
     //lock2.unlock();
@@ -108,37 +108,39 @@ void ThreadGtp1()
 {
   for (uint32_t index = 0; index < 10; ++index)
   {
-    GtpMesh::Context::Ptr context = MakeContext(79031712992 + index, 10, 20);
+    //std::cout << "01\n";
+    GtpMesh::Context::Ptr context = MakeContext(79031712992 + index, 150, 250);
     context->Id = index;
     //GtpMesh::Context::Ptr context = MakeContext(79031712992, 0, 0);
     GtpMesh::Context::Ptr outContext = nullptr;
     Mi.UpdateContextBy(context, outContext);
-    int k = 0;
   }
   GtpMesh::Context::Ptr outContext = nullptr;
-  Mi.DeleteContext(MakeContext(79031712992, 12345678, 55555555), outContext);
 }
 
 void ThreadGtp2()
 {
   for (uint32_t index = 0; index < 10; ++index)
   {
-    GtpMesh::Context::Ptr context = MakeContext(79031712992 + index, 10, 20);
+    //std::cout << "02\n";
+    GtpMesh::Context::Ptr context = MakeContext(79031712992 + index, 0, 0);
     context->Id = index;
     //GtpMesh::Context::Ptr context = MakeContext(79031712992, 0, 0);
     GtpMesh::Context::Ptr outContext = nullptr;
     Mi.UpdateContextBy(context, outContext);
-    int k = 0;
   }
+
+  GtpMesh::Context::Ptr outContext = nullptr;
+  Mi.DeleteContext(MakeContext(79031712992, 11, 21), outContext);
 }
 
-void PrintMap(const GtpMesh::BucketList<GtpMesh::ContextHolder>& bucketList)
+void PrintMap(GtpMesh::BucketList<GtpMesh::ContextHolder>& bucketList)
 {
-  const std::vector<GtpMesh::ContextHolder>& buckets = bucketList.GetBucketList();
+  std::vector<GtpMesh::ContextHolder>& buckets = bucketList.GetBucketList();
   uint32_t bucketNumber = 0;
-  for (const GtpMesh::ContextHolder& item : buckets)
+  for (GtpMesh::ContextHolder& item : buckets)
   {
-    const std::map<uint64_t, GtpMesh::Context::Ptr>& bucket = item.GetMap2();
+    const std::map<uint64_t, GtpMesh::Context::Ptr>& bucket = item.GetMap();
     std::cout << "bucket number " << bucketNumber << std::endl;
     for (auto contextHolder : bucket)
     {
@@ -149,7 +151,7 @@ void PrintMap(const GtpMesh::BucketList<GtpMesh::ContextHolder>& bucketList)
   }
 }
 
-void PrintContext(const GtpMesh::MultiIndexMap& mi)
+void PrintContext(GtpMesh::MultiIndexMap& mi)
 {
   std::cout << "Msisdn -------------------\n";
   PrintMap(mi.ListWithMsisdn);
@@ -171,6 +173,7 @@ void TestGtpContext()
 
   const GtpMesh::MultiIndexMap::Statistic& stat = Mi.GetStat();
   PrintContext(Mi);
+  int k = 0;
 }
 
 void TestLock()
