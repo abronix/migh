@@ -1,6 +1,7 @@
 #pragma once
 
 #include "gtp_bucket_list.h"
+#include <boost/smart_ptr/detail/spinlock.hpp>
 
 namespace GtpMesh
 {
@@ -14,20 +15,28 @@ namespace GtpMesh
     uint64_t Imei = 0;
   };
 
-  typedef Bucket<Context::Ptr> Shard;
+  typedef LockableBucket<Context::Ptr, boost::detail::spinlock> ContextHolder;
 
   class MultiIndexMap
   {
   public:
-    uint32_t CreateOrUpdateById(uint64_t id, const Context::Ptr& source, Context::Ptr& target);
-    uint32_t DeleteById(uint64_t id);
+    explicit MultiIndexMap(uint32_t numberOfBuckets);
+    ~MultiIndexMap() {}
 
-    uint32_t UpdateByMsisdn(uint64_t msisdn, const Context::Ptr& source, Context::Ptr& target);
-    uint32_t UpdateByImsi(uint64_t imsi, const Context::Ptr& source, Context::Ptr& target);
+    void UpdateContextBy(const Context::Ptr& inContext, Context::Ptr& outContext);
 
   private:
-    BucketList<Context::Ptr> MapById;
-    BucketList<Shard*> MapByMsisdn;
-    BucketList<Shard*> MapByImsi;
+    void UpdateContextByMsisdnImsiImei(const Context::Ptr& inContext, Context::Ptr& outContext);
+    void UpdateContextByMsisdnImsi(const Context::Ptr& inContext, Context::Ptr& outContext);
+    void UpdateContextByMsisdnImei(const Context::Ptr& inContext, Context::Ptr& outContext);
+    void UpdateContextByImsiImei(const Context::Ptr& inContext, Context::Ptr& outContext);
+    void UpdateContextByMsisdn(const Context::Ptr& inContext, Context::Ptr& outContext);
+    void UpdateContextByImsi(const Context::Ptr& inContext, Context::Ptr& outContext);
+    void UpdateContextByImei(const Context::Ptr& inContext, Context::Ptr& outContext);
+
+  private:
+    BucketList<ContextHolder> ListWithMsisdn;
+    BucketList<ContextHolder> ListWithImsi;
+    BucketList<ContextHolder> ListWithImei;
   };
 }
