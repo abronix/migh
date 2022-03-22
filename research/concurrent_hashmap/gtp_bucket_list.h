@@ -21,12 +21,6 @@ namespace GtpMesh
       return Map;
     }
 
-    // TODO: get rid
-    const std::map<uint64_t, ValueType>& GetMap2() const
-    {
-      return Map;
-    }
-
   private:
     LockType Lock;
     std::map<uint64_t, ValueType> Map;
