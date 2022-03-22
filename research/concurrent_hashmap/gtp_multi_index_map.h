@@ -23,7 +23,7 @@ namespace GtpMesh
     explicit MultiIndexMap(uint32_t numberOfBuckets);
     ~MultiIndexMap() {}
     void UpdateContextBy(const Context::Ptr& inContext, Context::Ptr& outContext);
-    void DeleteContext(const Context::Ptr& inContext, Context::Ptr& outContext);
+    void DeleteContext(const Context::Ptr& inContext);
 
     struct Statistic
     {

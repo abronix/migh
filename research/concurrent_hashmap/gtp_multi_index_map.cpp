@@ -153,9 +153,8 @@ namespace GtpMesh
     return contextHolder.GetMap().erase(index) > 0;
   }
 
-  void MultiIndexMap::DeleteContext(const Context::Ptr& inContext, Context::Ptr& outContext)
+  void MultiIndexMap::DeleteContext(const Context::Ptr& inContext)
   {
-    // TODO:
     if (inContext->Msisdn && DeleteContextByIndex(std::hash<uint64_t>{}(inContext->Msisdn), ListWithMsisdn)) --Stat.MapSizeMsisdn;
     if (inContext->Imsi && DeleteContextByIndex(std::hash<uint64_t>{}(inContext->Imsi), ListWithImsi)) --Stat.MapSizeImsi;
     if (inContext->Imei && DeleteContextByIndex(std::hash<uint64_t>{}(inContext->Imei), ListWithImei)) --Stat.MapSizeImei;
