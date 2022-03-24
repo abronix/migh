@@ -39,21 +39,12 @@ namespace GtpMesh
 
       struct Statistic
       {
-        std::atomic_uint64_t Endpoint = 0;
+        std::atomic_uint64_t MapSizeEndpoint = 0;
         std::atomic_uint64_t MapSizeMsisdn = 0;
         std::atomic_uint64_t MapSizeImsi = 0;
         std::atomic_uint64_t MapSizeImei = 0;
       };
       const Statistic& GetStat() const;
-
-    private:
-      void UpdateContextByMsisdnImsiImei(const Context::Ptr& inContext, Context::Ptr& outContext);
-      void UpdateContextByMsisdnImsi(const Context::Ptr& inContext, Context::Ptr& outContext);
-      void UpdateContextByMsisdnImei(const Context::Ptr& inContext, Context::Ptr& outContext);
-      void UpdateContextByImsiImei(const Context::Ptr& inContext, Context::Ptr& outContext);
-      void UpdateContextByMsisdn(const Context::Ptr& inContext, Context::Ptr& outContext);
-      void UpdateContextByImsi(const Context::Ptr& inContext, Context::Ptr& outContext);
-      void UpdateContextByImei(const Context::Ptr& inContext, Context::Ptr& outContext);
 
     public: // TODO: revert private
       BucketList<ContextHolder> ListWithEndpoint;

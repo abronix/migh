@@ -54,10 +54,12 @@ void ThreadGtp1()
   for (uint32_t index = 0; index < 10; ++index)
   {
     std::cout << "01\n";
-    GtpMesh::Mt::Context::Ptr inContext = MakeContext(10, 79031713000 + index, 50, 60);
+    GtpMesh::Mt::Context::Ptr inContext = MakeContext(10, 79031713000, 50, 60);
     GtpMesh::Mt::Context::Ptr outContext = nullptr;
     Mi.UpdateContext(inContext, outContext);
   }
+
+  Mi.DeleteContext(MakeContext(10, 0, 0, 0));
 }
 
 void ThreadGtp2()
@@ -65,10 +67,12 @@ void ThreadGtp2()
   for (uint32_t index = 0; index < 10; ++index)
   {
     std::cout << "02\n";
-    GtpMesh::Mt::Context::Ptr inContext = MakeContext(20, 79031712000 + index, 10, 20);
+    GtpMesh::Mt::Context::Ptr inContext = MakeContext(20, 79031712000, 10, 20);
     GtpMesh::Mt::Context::Ptr outContext = nullptr;
     Mi.UpdateContext(inContext, outContext);
   }
+
+  Mi.DeleteContext(MakeContext(20, 0, 0, 0));
 }
 
 void PrintMap(GtpMesh::Mt::BucketList<GtpMesh::Mt::ContextHolder>& bucketList)
@@ -90,6 +94,9 @@ void PrintMap(GtpMesh::Mt::BucketList<GtpMesh::Mt::ContextHolder>& bucketList)
 
 void PrintContext(GtpMesh::Mt::MultiIndexMap& mi)
 {
+  std::cout << "Endpoint------------------\n";
+  PrintMap(mi.ListWithEndpoint);
+
   std::cout << "Msisdn -------------------\n";
   PrintMap(mi.ListWithMsisdn);
 
@@ -98,6 +105,9 @@ void PrintContext(GtpMesh::Mt::MultiIndexMap& mi)
 
   std::cout << "Imei ---------------------\n";
   PrintMap(mi.ListWithImei);
+
+  const GtpMesh::Mt::MultiIndexMap::Statistic& stat = mi.GetStat();
+  int k = 0;
 }
 
 void TestGtpContext()
