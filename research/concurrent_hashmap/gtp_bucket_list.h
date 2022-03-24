@@ -7,50 +7,53 @@
 
 namespace GtpMesh
 {
-  template <typename ValueType, typename LockType>
-  class LockableBucket
+  namespace Mt
   {
-  public:
-    std::unique_lock<LockType> GetLock()
+    template <typename ValueType, typename LockType>
+    class LockableBucket
     {
-      return std::unique_lock<LockType>(Lock, std::defer_lock);
-    }
+    public:
+      std::unique_lock<LockType> GetLock()
+      {
+        return std::unique_lock<LockType>(Lock, std::defer_lock);
+      }
 
-    std::map<uint64_t, ValueType>& GetMap()
+      std::map<uint64_t, ValueType>& GetMap()
+      {
+        return Map;
+      }
+
+    private:
+      LockType Lock;
+      std::map<uint64_t, ValueType> Map;
+    };
+
+    template <typename BucketType>
+    class BucketList
     {
-      return Map;
-    }
+    public:
+      explicit BucketList(uint32_t numberOfBuckets)
+        : Mask(numberOfBuckets - 1)
+        , List(numberOfBuckets)
+      {
+        if ((numberOfBuckets & Mask) != 0)
+          throw std::runtime_error("number of buckets must be a power of two");
+      }
 
-  private:
-    LockType Lock;
-    std::map<uint64_t, ValueType> Map;
-  };
+      BucketType& GetBucket(uint64_t index)
+      {
+        return List[index & Mask];
+      }
 
-  template <typename BucketType>
-  class BucketList
-  {
-  public:
-    explicit BucketList(uint32_t numberOfBuckets)
-    : Mask(numberOfBuckets - 1)
-    , List(numberOfBuckets)
-    {
-      if ((numberOfBuckets & Mask) != 0)
-        throw std::runtime_error("number of buckets must be a power of two");
-    }
+      // For test only
+      std::vector<BucketType>& GetBucketList()
+      {
+        return List;
+      }
 
-    BucketType& GetBucket(uint64_t index)
-    {
-      return List[index & Mask];
-    }
-
-    // For test only
-    std::vector<BucketType>& GetBucketList()
-    {
-      return List;
-    }
-
-  private:
-    const uint32_t Mask;
-    std::vector<BucketType> List;
-  };
+    private:
+      const uint32_t Mask;
+      std::vector<BucketType> List;
+    };
+  }
 }

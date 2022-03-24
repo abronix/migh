@@ -6,51 +6,13 @@
 #include <mutex>
 #include <thread>
 
-
-uint64_t GlobalValue = 100;
-
-struct Object
-{
-  std::string Name;
-  uint64_t Msisdn = 0;
-  uint64_t Imsi = 0;
-  uint64_t* P = nullptr;  
-};
-
 using namespace std::chrono_literals;
-GtpMesh::LockableBucket<Object, boost::detail::spinlock> b1;
-GtpMesh::LockableBucket<Object, boost::detail::spinlock> b2;
-//GtpMesh::LockableBucket<Object, std::mutex> b1;
-//GtpMesh::LockableBucket<Object, std::mutex> b2;
-
-
-void PrintObject(uint32_t number, const Object& object)
-{
-  std::cout << "[" << number << "] Name(" << object.Name << "), Msisdn(" << object.Msisdn << "), Imsi(" << object.Msisdn << "), P(" << *object.P << ")\n";
-}
 
 void ThreadRoutine1()
 {
   for (uint32_t index = 0; index < 10; ++index)
   {
-    auto lock2 = b2.GetLock();
-    auto lock1 = b1.GetLock();
-    std::scoped_lock(lock2, lock1);
 
-    //b1.GetMap()[0].P = nullptr;
-    //b2.GetMap()[0].P = nullptr;
-
-    //std::this_thread::sleep_for(20ms);
-    //for (uint64_t i = 0; i < 100000000; ++i) {}
-
-    //b1.GetMap()[0].P = &GlobalValue;
-    //b2.GetMap()[0].P = &GlobalValue;
-
-    //PrintObject(1, b1.GetMap()[0]);
-    //PrintObject(1, b2.GetMap()[0]);
-
-    //lock1.unlock();
-    //lock2.unlock();
     //std::this_thread::yield();
     //std::this_thread::sleep_for(1ms);
   }
@@ -60,30 +22,12 @@ void ThreadRoutine2()
 {
   for (uint32_t index = 0; index < 10; ++index)
   {
-    auto lock1 = b1.GetLock();
-    auto lock2 = b2.GetLock();
-    std::scoped_lock(lock1, lock2);
-
-    //b1.GetMap()[0].P = nullptr;
-    //b2.GetMap()[0].P = nullptr;
-
-    //for (uint64_t i = 0; i < 100000000; ++i) {}
-    //std::this_thread::sleep_for(30ms);
-
-    //b1.GetMap()[0].P = &GlobalValue;
-    //b2.GetMap()[0].P = &GlobalValue;
-
-    //PrintObject(2, b1.GetMap()[0]);
-    //PrintObject(2, b2.GetMap()[0]);
-
-    //lock1.unlock();
-    //lock2.unlock();
     //std::this_thread::yield();
     //std::this_thread::sleep_for(1ms);
   }
 }
 
-void TestLockableBucket()
+void TestLockable()
 {
   std::thread t1(ThreadRoutine1);
   std::thread t2(ThreadRoutine2);
@@ -92,66 +36,59 @@ void TestLockableBucket()
   t2.join();
 }
 
-//GtpMesh::MultiIndexMap Mi(16384);
-GtpMesh::MultiIndexMap Mi(4);
-
-GtpMesh::Context::Ptr MakeContext(uint64_t msisdn, uint64_t imsi, uint64_t imei)
+GtpMesh::Mt::Context::Ptr MakeContext(uint64_t endpoint, uint64_t msisdn, uint64_t imsi, uint64_t imei)
 {
-  GtpMesh::Context::Ptr context = std::make_shared<GtpMesh::Context>();
+  GtpMesh::Mt::Context::Ptr context = std::make_shared<GtpMesh::Mt::Context>();
+  context->Endpoint = endpoint;
   context->Msisdn = msisdn;
   context->Imsi = imsi;
   context->Imei = imei;
   return context;
 }
 
+//GtpMesh::Mt::MultiIndexMap Mi(262144);
+GtpMesh::Mt::MultiIndexMap Mi(4);
+
 void ThreadGtp1()
 {
   for (uint32_t index = 0; index < 10; ++index)
   {
-    //std::cout << "01\n";
-    GtpMesh::Context::Ptr context = MakeContext(79031712992 + index, 150, 250);
-    context->Id = index;
-    //GtpMesh::Context::Ptr context = MakeContext(79031712992, 0, 0);
-    GtpMesh::Context::Ptr outContext = nullptr;
-    Mi.UpdateContextBy(context, outContext);
+    std::cout << "01\n";
+    GtpMesh::Mt::Context::Ptr inContext = MakeContext(10, 79031713000 + index, 50, 60);
+    GtpMesh::Mt::Context::Ptr outContext = nullptr;
+    Mi.UpdateContext(inContext, outContext);
   }
-  GtpMesh::Context::Ptr outContext = nullptr;
 }
 
 void ThreadGtp2()
 {
   for (uint32_t index = 0; index < 10; ++index)
   {
-    //std::cout << "02\n";
-    GtpMesh::Context::Ptr context = MakeContext(79031712992 + index, 0, 0);
-    context->Id = index;
-    //GtpMesh::Context::Ptr context = MakeContext(79031712992, 0, 0);
-    GtpMesh::Context::Ptr outContext = nullptr;
-    Mi.UpdateContextBy(context, outContext);
+    std::cout << "02\n";
+    GtpMesh::Mt::Context::Ptr inContext = MakeContext(20, 79031712000 + index, 10, 20);
+    GtpMesh::Mt::Context::Ptr outContext = nullptr;
+    Mi.UpdateContext(inContext, outContext);
   }
-
-  GtpMesh::Context::Ptr outContext = nullptr;
-  Mi.DeleteContext(MakeContext(79031712992, 11, 21), outContext);
 }
 
-void PrintMap(GtpMesh::BucketList<GtpMesh::ContextHolder>& bucketList)
+void PrintMap(GtpMesh::Mt::BucketList<GtpMesh::Mt::ContextHolder>& bucketList)
 {
-  std::vector<GtpMesh::ContextHolder>& buckets = bucketList.GetBucketList();
+  std::vector<GtpMesh::Mt::ContextHolder>& buckets = bucketList.GetBucketList();
   uint32_t bucketNumber = 0;
-  for (GtpMesh::ContextHolder& item : buckets)
+  for (GtpMesh::Mt::ContextHolder& item : buckets)
   {
-    const std::map<uint64_t, GtpMesh::Context::Ptr>& bucket = item.GetMap();
+    const std::map<uint64_t, GtpMesh::Mt::Context::Ptr>& bucket = item.GetMap();
     std::cout << "bucket number " << bucketNumber << std::endl;
     for (auto contextHolder : bucket)
     {
-      const GtpMesh::Context& context = *contextHolder.second;
-      std::cout << "[" << contextHolder.first << "] Id(" << context.Id << ") Msisdn(" << context.Msisdn << ") Imsi(" << context.Imsi << ") Imei(" << context.Imei << ")\n";
+      const GtpMesh::Mt::Context& context = *contextHolder.second;
+      std::cout << "[" << contextHolder.first << "] Endpoint(" << context.Endpoint << ") Msisdn(" << context.Msisdn << ") Imsi(" << context.Imsi << ") Imei(" << context.Imei << ")\n";
     }
     bucketNumber++;
   }
 }
 
-void PrintContext(GtpMesh::MultiIndexMap& mi)
+void PrintContext(GtpMesh::Mt::MultiIndexMap& mi)
 {
   std::cout << "Msisdn -------------------\n";
   PrintMap(mi.ListWithMsisdn);
@@ -171,10 +108,20 @@ void TestGtpContext()
   t1.join();
   t2.join();
 
-  const GtpMesh::MultiIndexMap::Statistic& stat = Mi.GetStat();
+  const GtpMesh::Mt::MultiIndexMap::Statistic& stat = Mi.GetStat();
   PrintContext(Mi);
   int k = 0;
 }
+
+class IdleMutex
+{
+public:
+  IdleMutex() {}
+  ~IdleMutex() {}
+  void lock() {}
+  bool try_lock() { return true; }
+  void unlock() {}
+};
 
 void TestLock()
 {
@@ -182,14 +129,18 @@ void TestLock()
   boost::detail::spinlock b;
   boost::detail::spinlock c;
   boost::detail::spinlock d;
+  IdleMutex e;
 
   std::unique_lock<decltype(a)> lock1(a, std::defer_lock);
   std::unique_lock<decltype(b)> lock2(b, std::defer_lock);
   std::unique_lock<decltype(c)> lock3(c, std::defer_lock);
   std::unique_lock<decltype(d)> lock4(d, std::defer_lock);
+  std::unique_lock<decltype(e)> lock5(e, std::defer_lock);
 
   // блокирует оба объекта unique_lock без взаимной блокировки
-  std::lock(lock1, lock2, lock3, lock4);
+  std::lock(lock1, lock2, lock3, lock5);
+
+  int k = 0;
 }
 
 int main(int argc, char** argv)
@@ -200,7 +151,6 @@ int main(int argc, char** argv)
     std::chrono::system_clock::time_point timePoint = std::chrono::system_clock::now();
 
     //TestLock();
-    //TestLockableBucket();
     TestGtpContext();
 
     std::chrono::microseconds timeInMicroseconds = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - timePoint);
