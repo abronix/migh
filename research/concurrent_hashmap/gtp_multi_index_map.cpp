@@ -57,7 +57,7 @@ namespace GtpMesh
     {
       const uint64_t hashWithMsisdn = std::hash<uint64_t>{}(inContext->Msisdn);
       ContextHolder& contextHolderWithMsisdn = ListWithMsisdn.GetBucket(hashWithMsisdn);
-      auto contextHolderWithMsisdnLock = contextHolderWithMsisdn.GetLock();
+      auto contextHolderWithMsisdnLock = inContext->Msisdn ? contextHolderWithMsisdn.GetLock() : contextHolderWithMsisdn.GetIdleLock();
 
       const uint64_t hashWithImsi = std::hash<uint64_t>{}(inContext->Imsi);
       ContextHolder& contextHolderWithImsi = ListWithImsi.GetBucket(hashWithImsi);
